@@ -1,1 +1,55 @@
+local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/modern"))()
+local Remote = game:FindFirstChild("PetLeadService_RE", true)
+local Player = game.Players.LocalPlayer
+local petsFolder = workspace:FindFirstChild("PetsPhysical")
+local highlightProps = {
+        FillColor = Color3.fromRGB(255, 255, 0),
+        OutlineColor = Color3.fromRGB(0, 0, 0),
+        DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    }
+local function createHighlight(part, props)
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = part
+    for prop, value in pairs(props) do
+        highlight[prop] = value
+    end
+    highlight.Parent = part
+end
 
+local function getOwnedPetModels(petsFolder, ownerName)
+    local models = {}
+    for _, model in ipairs(petsFolder:GetDescendants()) do
+        if model:IsA("Model") and model.Parent:GetAttribute("OWNER") == ownerName then
+            table.insert(models, model)
+        end
+    end
+    return models
+end
+
+local function applyHighlights(models, props)
+    for _, model in ipairs(models) do
+        for _, part in ipairs(model:GetDescendants()) do
+            if part:IsA("BasePart") then
+                createHighlight(part, props)
+            end
+        end
+    end
+end
+
+local function startAutoLead(models)
+    coroutine.wrap(function()
+        while _G.AutoPetLead do
+            for _, model in ipairs(models) do
+                Remote:FireServer(model)
+            end
+            task.wait(10.5)
+        end
+    end)()
+end
+
+Lib:Tab("Auto Lead (bloodball)"):Toggle("Auto Lead", function(state)
+    _G.AutoPetLead = state
+    local models = getOwnedPetModels(petsFolder, Player.Name)
+    applyHighlights(models, highlightProps)
+    startAutoLead(models)
+end)
