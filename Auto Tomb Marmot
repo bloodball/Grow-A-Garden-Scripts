@@ -1,0 +1,18 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function teleportToTombstone(tombstone)
+    local root = tombstone:FindFirstChild("RootPart") 
+    local character = player.Character
+    local humanoid =  character:FindFirstChildOfClass("Humanoid")
+
+    if root and character and humanoid then
+        character:SetPrimaryPartCFrame(root.CFrame)
+    end
+end
+
+workspace.ChildAdded:Connect(function(child)
+    if child.Name == "Tombstone2" then
+        teleportToTombstone(child)
+    end
+end)
