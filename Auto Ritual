@@ -1,0 +1,59 @@
+_G.AutoWater = true
+local farm = workspace.Farm.Farm.Important
+local cosmetic = farm.Cosmetic_Physical
+local plantsPhysical = farm.Plants_Physical
+local events = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents")
+local plantEvent = events:WaitForChild("Plant_RE")
+local waterEvent = events:WaitForChild("Water_RE")
+local player = game.Players.LocalPlayer
+local backpack = player:WaitForChild("Backpack")
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- [[Equip tools]] --
+for _, tool in ipairs(backpack:GetChildren()) do
+    if tool:IsA("Tool") then
+        local name = tool.Name
+        local normalizedName = name:gsub("%s+", ""):lower()
+
+        if normalizedName:find("wateringcan") or name:match("^Mushroom Seed %[%s*X%d+%s*%]$") then
+            tool.Parent = character
+        end
+    end
+end
+
+-- [[ Water mushrooms]] --
+local function WaterMushrooms()
+    for _, plant in ipairs(plantsPhysical:GetChildren()) do
+        if plant.Name == "Mushroom" and plant:FindFirstChild("1") then
+            waterEvent:FireServer(plant["1"].Position)
+        end
+    end
+end
+
+-- [[Auto-plant mushrooms when removed]] --
+plantsPhysical.DescendantRemoving:Connect(function(descendant)
+    if descendant.Name ~= "Mushroom" then return end
+
+    for _, part in ipairs(cosmetic:GetChildren()) do
+        if part:IsA("Part") then
+            local hex = part:FindFirstChild("Hex Circle")
+            local hitbox = hex and hex:FindFirstChild("Hitbox")
+
+            if hitbox then
+                character:MoveTo(hitbox.Position)
+                for _ = 1, 5 do
+                    task.wait(0.5)
+                    plantEvent:FireServer(hitbox.Position, "Mushroom")
+                end
+            end
+        end
+    end
+end)
+
+-- [[Auto-watering loop]] --
+task.spawn(function()
+    while _G.AutoWater do
+        task.wait(1.5)
+        WaterMushrooms()
+    end
+end)
